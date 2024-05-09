@@ -46,8 +46,11 @@ class LoginView(APIView):
 class SignOutView(APIView):
     authentication_classes=[TokenAuthentication]
     def get(self,r):
-        Token.objects.get(key=r.auth).delete()
-        return Response({"status":True},status=status.HTTP_200_OK)
+        try:
+            Token.objects.get(key=r.auth).delete()
+            return Response({"status":True},status=status.HTTP_200_OK)
+        except:
+            return Response({"status":False,"error":"Failed to logout"},status=status.HTTP_400_BAD_REQUEST)
 class SearchView(APIView):
     def get(self,r):
         search=r.GET['link']
@@ -74,44 +77,6 @@ class SearchView(APIView):
         except :
             pass
         return Response(data,status=status.HTTP_200_OK)
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
-import time
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-chrome_options=Options()
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--disable-dev-shm-usage')
-class TestView(APIView):
-    def get(self, request):
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=chrome_options)
-        driver.get("https://pricehistoryapp.com/")
-
-        # Wait for the search input field to be clickable
-        search_input = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, '//input'))
-        )
-
-        search_input.send_keys("firebolt phoenix amoled")
-        search_input.send_keys(Keys.ENTER)
-
-        # Wait for page to load (add more explicit waits as needed)
-        time.sleep(5)
-
-        # Now you can interact with the page or extract data
-        # For example, you can get the page source:
-        # page_source = driver.page_source
-        soup=bs(driver.page_source,'html.parser')
-        data=soup.find('div',id='___gcse_0')
-        data=json.dumps({'html_content': str(data)}, ensure_ascii=False)
-        driver.quit()
-
-        return Response(data)
 
 class ProductView(APIView):
     def get(self,r):

@@ -68,9 +68,11 @@ class SearchView(APIView):
             }
         req=requests.get("https://www.googleapis.com/customsearch/v1",params=params)
         data=req.json()
-        if int(data["searchInformation"]["totalResults"])>0:
+        try:
             for i in data['items']:
                 i['link']=i['link'].replace("https://pricehistoryapp.com/product/","")
+        except :
+            pass
         return Response(data,status=status.HTTP_200_OK)
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -111,17 +113,6 @@ class TestView(APIView):
 
         return Response(data)
 
-# class TestView(APIView):
-#     def get(self,r):
-#         driver=webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-#         driver.get("https://pricehistoryapp.com/")
-#         time.sleep(5)
-#         search=driver.find_element_by_xpath('//input')
-#         search.send_keys("firebolt phoenix amoled")
-#         search.send_keys(Keys.ENTER)
-#         # soup=bs(driver.page_source,'html.parser')
-#         # print(soup)
-#         return Response({"status":True})
 class ProductView(APIView):
     def get(self,r):
         req=requests.get("https://pricehistoryapp.com/product/"+r.GET['link'])

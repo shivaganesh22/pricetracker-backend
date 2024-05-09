@@ -72,6 +72,52 @@ class SearchView(APIView):
             for i in data['items']:
                 i['link']=i['link'].replace("https://pricehistoryapp.com/product/","")
         return Response(data,status=status.HTTP_200_OK)
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
+import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+class TestView(APIView):
+    def get(self, request):
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+        driver.get("https://pricehistoryapp.com/")
+
+        # Wait for the search input field to be clickable
+        search_input = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, '//input'))
+        )
+
+        search_input.send_keys("firebolt phoenix amoled")
+        search_input.send_keys(Keys.ENTER)
+
+        # Wait for page to load (add more explicit waits as needed)
+        time.sleep(5)
+
+        # Now you can interact with the page or extract data
+        # For example, you can get the page source:
+        # page_source = driver.page_source
+        soup=bs(driver.page_source,'html.parser')
+        data=soup.find('div',id='___gcse_0')
+        data=json.dumps({'html_content': str(data)}, ensure_ascii=False)
+        driver.quit()
+
+        return Response(data)
+
+# class TestView(APIView):
+#     def get(self,r):
+#         driver=webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+#         driver.get("https://pricehistoryapp.com/")
+#         time.sleep(5)
+#         search=driver.find_element_by_xpath('//input')
+#         search.send_keys("firebolt phoenix amoled")
+#         search.send_keys(Keys.ENTER)
+#         # soup=bs(driver.page_source,'html.parser')
+#         # print(soup)
+#         return Response({"status":True})
 class ProductView(APIView):
     def get(self,r):
         req=requests.get("https://pricehistoryapp.com/product/"+r.GET['link'])

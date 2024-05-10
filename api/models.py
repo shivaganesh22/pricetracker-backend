@@ -10,9 +10,9 @@ class FCM(models.Model):
         return self.user.username+" "+self.token
 class Alert(models.Model):
     user=models.ForeignKey(User,on_delete=models.CASCADE)
-    name=models.CharField(max_length=100)
+    name=models.CharField(max_length=500)
     price=models.FloatField()
-    slug=models.CharField(max_length=100)
+    slug=models.CharField(max_length=500)
     image=models.URLField()
     def __str__(self):
         return self.user.username+" "+self.slug

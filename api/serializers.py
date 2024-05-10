@@ -21,6 +21,7 @@ class ResetSerializer(serializers.Serializer):
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model=Contact
+        fields='__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(

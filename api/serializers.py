@@ -1,10 +1,27 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from rest_framework.validators import UniqueValidator
-from rest_framework.authtoken.models import Token
+from .models import *
 class LoginSerializer(serializers.Serializer):
     email=serializers.EmailField(required=True)
     password=serializers.CharField(max_length=100)
+class FCMSerializer(serializers.Serializer):
+    token=serializers.CharField(max_length=500)
+
+class AlertSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Alert
+        fields=['id','name','price','image','slug']
+
+class ForgotSerializer(serializers.Serializer):
+    email=serializers.EmailField()
+class ResetSerializer(serializers.Serializer):
+    token=serializers.CharField(max_length=100)
+    password=serializers.CharField(max_length=100)
+    
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Contact
+
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
             required=True,

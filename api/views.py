@@ -16,19 +16,41 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
+import uuid
 # Create your views here.
 @api_view(['GET'])
 def home(r):
     return Response({"hes":"ee"})
+def sendMail(subject,message,email):
+    send_mail(subject,message,'rsg-tracker@gmail.com',email,fail_silently=False)
 
 class SignupView(APIView):
     def post(self,r):
         serializer = UserSerializer(data=r.data)
         if serializer.is_valid():
             user=serializer.save()
-            token,created=Token.objects.get_or_create(user=user)
-            return Response({"token":token.key,"created":created,"status":True},status=status.HTTP_200_OK)
+            token=uuid.uuid4()
+            Verification(user=user,token=token).save()
+            sendMail("Email Verification",f'Dear {user.username} click below link to verify your email\nhttps://rsg-tracker.vercel.app/verifyemail/{token}',[user.email])
+            # token,created=Token.objects.get_or_create(user=user)
+            return Response({"status":True},status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+class VerificationView(APIView):
+    def post(self,r):
+        serializer=FCMSerializer(data=r.data)
+        if serializer.is_valid():
+            try:
+                obj=Verification.objects.get(token=serializer.data["token"])
+                if obj.is_verified:
+                    return Response({"error":"Email already verified"},status=status.HTTP_400_BAD_REQUEST)
+                obj.is_verified=True
+                obj.save()
+                return Response({"status":True},status=status.HTTP_200_OK)
+            except:
+                return Response({"error":"Invalid link"},status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
 class LoginView(APIView):
     def post(self,r):
         serializer = LoginSerializer(data=r.data)
@@ -37,8 +59,11 @@ class LoginView(APIView):
                 user=User.objects.get(email=serializer.data["email"].lower())
                 user=authenticate(username=user.username,password=serializer.data['password'])
                 if user is not None:
-                    token,created=Token.objects.get_or_create(user=user)
-                    return Response({"token":token.key,"created":created,"status":True},status=status.HTTP_200_OK)
+                    if Verification.objects.filter(user=user,is_verified=True):
+                        token,created=Token.objects.get_or_create(user=user)
+                        return Response({"token":token.key,"created":created,"status":True},status=status.HTTP_200_OK)
+                    else:
+                        return  Response({"error":"Email not verified"},status=status.HTTP_400_BAD_REQUEST)
                 return  Response({"error":"Invalid Credentials"},status=status.HTTP_400_BAD_REQUEST)
             except:
                 return Response({"error":"User not found with this email"},status=status.HTTP_400_BAD_REQUEST)
@@ -51,6 +76,84 @@ class SignOutView(APIView):
             return Response({"status":True},status=status.HTTP_200_OK)
         except:
             return Response({"status":False,"error":"Failed to logout"},status=status.HTTP_400_BAD_REQUEST)
+class ForgotView(APIView):
+    def post(self,r):
+        serializer=ForgotSerializer(data=r.data)
+        if serializer.is_valid():
+            try:
+                user=User.objects.get(email=serializer.data["email"])
+                ForgotPassword.objects.filter(user=user).delete()
+                token=uuid.uuid4()
+                sendMail("Password Reset",f"Dear {user.username} click below link to reset password\nhttps://rsg-tracker.vercel.app/resetpassword/{token}",[user.email])
+                ForgotPassword(user=user,token=token).save()
+                return Response({"status":True},status=status.HTTP_200_OK)
+            except:
+                return Response({"error":"User not found with this email"},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        
+class ResetView(APIView):
+    def post(self,r):
+        serializer=ResetSerializer(data=r.data)
+        if serializer.is_valid():
+            if len(serializer.data["password"])<8:
+                return Response({"error":"Password must be greater or equal to 8 characters"},status=status.HTTP_400_BAD_REQUEST)
+            try:
+                if ForgotPassword.objects.filter(token=serializer.data["token"]).exists():
+                    obj=ForgotPassword.objects.get(token=serializer.data["token"])
+                    if timezone.now()<=obj.expire_date:
+                        user=User.objects.get(username=obj.user.username)
+                        user.set_password(serializer.data["password"])
+                        user.save()
+                        obj.delete()
+                        sendMail("Password Reset",f"Dear {user.username} your password reset successful",[user.email])
+                        return Response({"status":True},status=status.HTTP_200_OK)
+                    else:
+                        return Response({"error":"Link has been expired"},status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    return Response({"error":"Invalid link"},status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"error":"Failed to reset password "},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class FCMView(APIView):
+    authentication_classes=[TokenAuthentication]
+    def post(self,r):
+        try:
+            serializer=FCMSerializer(data=r.data)
+            if serializer.is_valid():
+                FCM(token=serializer.data["token"],user=r.auth.user).save()
+                return Response({"status":True},status=status.HTTP_200_OK)
+        except:
+            return Response({"status":False},status=status.HTTP_400_BAD_REQUEST)
+        
+class AlertView(APIView):
+    authentication_classes=[TokenAuthentication]
+    def get(self,r):
+        serializer=AlertSerializer(Alert.objects.filter(user=r.auth.user),many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    def post(self,r):
+        serializer=AlertSerializer(data=r.data) 
+        try:
+            if serializer.is_valid():
+                if not Alert.objects.filter(slug=serializer.data["slug"],user=r.auth.user).exists():
+                    Alert(slug=serializer.data["slug"],name=serializer.data["name"],price=serializer.data["price"],image=serializer.data["image"],user=r.auth.user).save()
+                    return Response({"status":True},status=status.HTTP_200_OK)
+                else :
+                    return Response({"error":"Alert already added"},status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({"error":"Failed to add alert"},status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self,r,id):
+        try:
+            Alert.objects.get(id=id).delete()
+            return Response({"status":True},status=status.HTTP_200_OK)
+        except:
+            return Response({"error":"Failed to delete alert"},status=status.HTTP_400_BAD_REQUEST)
+
 class SearchView(APIView):
     def get(self,r):
         search=r.GET['link']
@@ -96,4 +199,10 @@ class AddProduct(APIView):
     def post(self,r):
         pass
 
-
+class ContactView(APIView):
+    def post(self,r):
+        serializer=ContactSerializer(data=r.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"status":True},status=status.HTTP_200_OK)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)

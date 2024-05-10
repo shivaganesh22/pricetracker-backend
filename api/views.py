@@ -252,6 +252,8 @@ class SendFCM(APIView):
                     body=f'The {i.name} Price is {price}'
                     k.append(send_fcm_notification(tokens,title,body,i.image,"/product/"+i.slug))
                     sendMail(title,body+f"\nhttps://rsg-tracker.vercel.app/product/{i.slug}",[i.user.email])
+                    i.price=price
+                    i.save()
             return Response({"status":True,"items":k},status=status.HTTP_200_OK)
         except:
             return Response({"error":"Failed to send notifications"},status=status.HTTP_400_BAD_REQUEST)

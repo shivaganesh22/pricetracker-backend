@@ -207,3 +207,51 @@ class ContactView(APIView):
             sendMail("Form Submit",f'Name:{serializer.data["name"]}\nEmail:{serializer.data["email"]}\nSubject:{serializer.data["subject"]}\nMessage:{serializer.data["message"]}',["rockstarshivaganesh@gmail.com"])
             return Response({"status":True},status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+def getPrice(slug):
+    try:
+        req=requests.get("https://pricehistoryapp.com/product/"+slug)
+        soup=bs(req.content,'html.parser')
+        script = soup.find('script', id='__NEXT_DATA__')
+        script_content = script.string    
+        data = json.loads(script_content)
+        data = data.get('props', {}).get('pageProps', {})
+        return data["ogProduct"]["price"]
+    except:
+        return 0
+def send_fcm_notification(tokens, title, body,image,link):
+    url = 'https://fcm.googleapis.com/fcm/send'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'key=AAAAhHqY1L0:APA91bF76GAl0BG_JOc9UNOTmQCBAA8irf_7z9zRRIr7NmvM3Gr4VYYTnHAMLb-ZP-td473Bfjek76dYR81a0xnRRFkPihOeTdA8quIotP8uw685M6ZjZJrL-jokGGreuRywtYd7JdJj',  # Replace YOUR_SERVER_KEY with your Firebase Server key
+    }
+    payload = {
+        'registration_ids':tokens ,
+        'data': {
+            'title': title,
+            'body': body,
+            'image':image,
+            # "icon":"https://rsgmovies.vercel.app/fav_c.png",
+            'link':link
+        },
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    if response.status_code == 200:
+        return "Sent "+body
+    else:
+        return "Failed to sent notification "
+class SendFCM(APIView):
+    def get(self,r):
+        k=[]
+        try:
+            for i in Alert.objects.all():
+                price=getPrice(i.slug)
+                if i.price!=price:
+                    serializer=FCMSerializer(FCM.objects.filter(user=i.user),many=True)
+                    tokens=[j["token"] for j in serializer.data]
+                    title=f"Price increased {price}" if price>i.price else f"Price decreased {price}"
+                    body=f'The {i.name} Price is {price}'
+                    k.append(send_fcm_notification(tokens,title,body,i.image,"/product/"+i.slug))
+                    sendMail(title,body+f"\nhttps://rsg-tracker.vercel.app/product/{i.slug}",[i.user.email])
+            return Response({"status":True,"items":k},status=status.HTTP_200_OK)
+        except:
+            return Response({"error":"Failed to send notifications"},status=status.HTTP_400_BAD_REQUEST)

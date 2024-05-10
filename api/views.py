@@ -204,5 +204,6 @@ class ContactView(APIView):
         serializer=ContactSerializer(data=r.data)
         if serializer.is_valid():
             serializer.save()
+            sendMail("Form Submit",f'Name:{serializer.data["name"]}\nEmail:{serializer.data["email"]}\nSubject:{serializer.data["subject"]}\nMessage:{serializer.data["message"]}',["rockstarshivaganesh@gmail.com"])
             return Response({"status":True},status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)

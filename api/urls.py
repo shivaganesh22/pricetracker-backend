@@ -14,5 +14,7 @@ urlpatterns = [
     path('alert/<int:id>/',AlertView.as_view()),
     path('forgotpassword/',ForgotView.as_view()),
     path('resetpassword/',ResetView.as_view()),
+    path('contact/',ContactView.as_view()),
+
 
 ]

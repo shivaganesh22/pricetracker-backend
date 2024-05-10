@@ -23,7 +23,7 @@ import uuid
 def home(r):
     return Response({"hes":"ee"})
 def sendMail(subject,message,email):
-    send_mail(subject,message,'rsg-tracker@gmail.com',email,fail_silently=False)
+    send_mail(subject,message,'rsgtracker@gmail.com',email,fail_silently=False)
 
 class SignupView(APIView):
     def post(self,r):
@@ -32,7 +32,7 @@ class SignupView(APIView):
             user=serializer.save()
             token=uuid.uuid4()
             Verification(user=user,token=token).save()
-            sendMail("Email Verification",f'Dear {user.username} click below link to verify your email\nhttps://rsg-tracker.vercel.app/verifyemail/{token}',[user.email])
+            sendMail("Email Verification",f'Dear {user.username} click below link to verify your email\nhttps://rsgtracker.vercel.app/verifyemail/{token}',[user.email])
             # token,created=Token.objects.get_or_create(user=user)
             return Response({"status":True},status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
@@ -84,7 +84,7 @@ class ForgotView(APIView):
                 user=User.objects.get(email=serializer.data["email"])
                 ForgotPassword.objects.filter(user=user).delete()
                 token=uuid.uuid4()
-                sendMail("Password Reset",f"Dear {user.username} click below link to reset password\nhttps://rsg-tracker.vercel.app/resetpassword/{token}",[user.email])
+                sendMail("Password Reset",f"Dear {user.username} click below link to reset password\nhttps://rsgtracker.vercel.app/resetpassword/{token}",[user.email])
                 ForgotPassword(user=user,token=token).save()
                 return Response({"status":True},status=status.HTTP_200_OK)
             except:
@@ -251,7 +251,7 @@ class SendFCM(APIView):
                     title=f"Price increased {price}" if price>i.price else f"Price decreased {price}"
                     body=f'The {i.name} Price is {price}'
                     k.append(send_fcm_notification(tokens,title,body,i.image,"/product/"+i.slug))
-                    sendMail(title,body+f"\nhttps://rsg-tracker.vercel.app/product/{i.slug}",[i.user.email])
+                    sendMail(title,body+f"\nhttps://rsgtracker.vercel.app/product/{i.slug}",[i.user.email])
                     i.price=price
                     i.save()
             return Response({"status":True,"items":k},status=status.HTTP_200_OK)

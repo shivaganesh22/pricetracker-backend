@@ -7,6 +7,7 @@ urlpatterns = [
     path('verifyemail/',VerificationView.as_view()),
     path('login/',LoginView.as_view()),
     path('logout/',SignOutView.as_view()),
+    path('deals/',DealsView.as_view()),
     path('search/',SearchView.as_view()),
     path('product/',ProductView.as_view()),
     path('fcm/',FCMView.as_view()),

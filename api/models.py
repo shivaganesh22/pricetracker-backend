@@ -35,3 +35,5 @@ class Contact(models.Model):
     message=models.TextField()
     def __str__(self) :
         return self.name+"  "+self.subject
+class ImageUpload(models.Model):
+    img=models.ImageField(upload_to='images')

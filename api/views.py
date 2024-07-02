@@ -19,9 +19,13 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 import uuid
 # Create your views here.
-@api_view(['GET'])
+
 def home(r):
-    return Response({"hes":"ee"})
+    if r.method=="POST":
+        img=r.FILES['img']
+        ImageUpload(img=img).save()
+        return redirect('/')
+    return render(r,'home.html')
 def sendMail(subject,message,email):
     send_mail(subject,message,'rsgtracker@gmail.com',email,fail_silently=False)
 

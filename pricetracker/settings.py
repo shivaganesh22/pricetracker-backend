@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-n=nswn)5woz4b9a6+ih8xtsf&&tagewq==pi8yz9i(d0#q@)of'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -66,11 +66,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'pricetracker.urls'
-
+import os
+tt=os.path.join(BASE_DIR,"templates")
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [tt],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -137,7 +138,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-import os
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 

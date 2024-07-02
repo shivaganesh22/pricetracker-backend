@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "corsheaders",
-    'api'
+    'api',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 CORS_ALLOWED_ORIGINS = [
     
@@ -64,7 +66,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dvfp1kgxz',
+    'API_KEY': '722253645369222',
+    'API_SECRET': 'lXqubfBWvgM3AmOX4s7ZZ4gNJXo'
+}
 ROOT_URLCONF = 'pricetracker.urls'
 import os
 tt=os.path.join(BASE_DIR,"templates")
@@ -155,6 +161,7 @@ else:
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

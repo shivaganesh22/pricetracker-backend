@@ -4,3 +4,5 @@ requests
 psycopg2-binary
 beautifulsoup4
 django-cors-headers
+pillow
+django-cloudinary-storage

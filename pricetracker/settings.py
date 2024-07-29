@@ -23,7 +23,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-n=nswn)5woz4b9a6+ih8xtsf&&tagewq==pi8yz9i(d0#q@)of'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+import socket
+
+hostname = socket.gethostname()
+
+if hostname in ['localhost', '127.0.0.1']:
+    DEBUG = True
+
+
+
 
 ALLOWED_HOSTS = ['*']
 
@@ -41,8 +50,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "corsheaders",
     'api',
-    'cloudinary_storage',
-    'cloudinary',
 ]
 CORS_ALLOWED_ORIGINS = [
     
@@ -66,11 +73,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dvfp1kgxz',
-    'API_KEY': '722253645369222',
-    'API_SECRET': 'lXqubfBWvgM3AmOX4s7ZZ4gNJXo'
-}
+
 ROOT_URLCONF = 'pricetracker.urls'
 import os
 tt=os.path.join(BASE_DIR,"templates")
@@ -152,16 +155,13 @@ STATIC_URL = '/static/'
 
 MEDIA_URL = '/media/'
 
+
 if DEBUG:
-
     STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-
 else:
-
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')    
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

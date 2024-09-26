@@ -199,7 +199,7 @@ class ProductView(APIView):
             return Response({"status":False},status=status.HTTP_400_BAD_REQUEST)
 class DealsView(APIView):
     def get(self,r):
-        req=requests.get("https://pricehistoryapp.com/_next/data/jazupZ56Ldkz0y_NT_sbc/en-IN.json")
+        req=requests.get("https://pricehistoryapp.com/_next/data/x6ee3C_zgbxGTcoWZ_6EI/en-IN.json")
         try:
             data=json.loads(req.content)
             return Response(data["pageProps"]["deals"],status=status.HTTP_200_OK)    
